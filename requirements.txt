@@ -1,3 +1,2 @@
-aiogram
-python-dotenv
-aiohttp
+aiogram==3.15.0
+python-dotenv==1.0.0
