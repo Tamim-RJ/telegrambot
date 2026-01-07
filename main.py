@@ -1,4 +1,5 @@
 from aiogram.client.default import DefaultBotProperties
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
@@ -28,6 +29,37 @@ FILTER_ACTIVE = False
 FILTER_WORDS = []
 FILTER_BYPASS_ADMINS = True
 muted_users = {}
+main_help_text = """
+<b>راهنمای ربات</b>
+
+یکی از گزینه‌های زیر رو انتخاب کن
+"""
+
+help_text = {
+    "help_delete": """
+    <b>راهنمای حذف</b>
+
+حذف [تعداد] - پاک کردن پیام‌ها
+حذف - حذف پیام مشخص شده (reply)""",
+
+    "help_pin": """
+    <b>راهنمای پین</b>
+
+پین - پین کردن پیام (reply)
+حذف پین - حذف پین (reply)
+حذف پین همه - حذف همه پین ها (reply)""",
+
+    "help_mute": """
+    <b>راهنمای سکوت</b>
+
+سکوت [دقیقه] - سکوت کاربر (reply)
+حذف سکوت - لغو سکوت (reply)""",
+
+    "help_eco": """
+    <b>راهنمای اکو</b>
+
+    بگوو [متن] - ارسال پیام از طرف ربات"""
+}
 
 _DIGIT_MAP = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 
@@ -55,25 +87,47 @@ async def auto_delete_after(chat_id: int, message_ids: list[int], delay: int = 1
     await asyncio.sleep(delay)
     await delete_messages_safe(chat_id, message_ids)
 
+def help_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="حذف", callback_data="help_delete")],
+        [InlineKeyboardButton(text="پین", callback_data="help_pin")],
+        [InlineKeyboardButton(text="سکوت", callback_data="help_mute")],
+        [InlineKeyboardButton(text="اکو", callback_data="help_eco")],
+    ])
+
+def help_keyboard_sub():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="بازگشت", callback_data="help_main")
+        ]
+    ])
+
 @dp.message(Command("start", "help"))
 async def cmd_start(message: types.Message):
-    if message.chat.type == "private" or "group" or "supergroup":
-        help_text = """
-<b>راهنمای ربات</b>
+        await message.answer(
+            main_help_text,
+            reply_markup=help_keyboard()
+        )
 
-<b>دستورات مدیریتی:</b>
+@dp.callback_query(F.data.startswith("help_"))
+async def help_callback(call: types.CallbackQuery):
 
-حذف [تعداد] - پاک کردن پیام‌ها
-پین - پین کردن پیام (reply)
-حذف پین - حذف پین (reply)
-حذف پین همه - حذف همه پین ها (reply)
-سکوت [دقیقه] - سکوت کاربر (reply)
-حذف سکوت - لغو سکوت (reply)
-بگوو [متن] - ارسال پیام از طرف ربات
+    if call.data == "help_main":
+        await call.message.edit_text(
+            main_help_text,
+            reply_markup=help_keyboard()
+        )
+        await call.answer()
+        return
 
-<b>توجه:</b> برای ادمین و منه
-        """
-        await message.answer(help_text.strip())
+    text = help_text.get(call.data, "راهنمایی موجود نیست.")
+
+    await call.message.edit_text(
+        text,
+        reply_markup=help_keyboard_sub()
+    )
+
+    await call.answer()
 
 @dp.message(Command("clear"))
 async def cmd_clear(message: types.Message):
@@ -439,5 +493,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
-
-#کی میخواد بیاد کد منو نگاه کنه آخه، الکی دارم کامنت میذارم... پاکشون میکنم
