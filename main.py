@@ -125,29 +125,6 @@ async def _commands_and_filters(message: types.Message):
         except Exception:
             return False
 
-    logging.debug(f"Incoming message id={message.message_id} from={user_id} reply_to={bool(message.reply_to_message)}")
-    if message.reply_to_message:
-        try:
-            rt = message.reply_to_message
-            logging.debug(f"Replied message id={rt.message_id} from={(rt.from_user.id if rt.from_user else 'None')} is_bot={(rt.from_user.is_bot if rt.from_user else 'N/A')} text={(rt.text or rt.caption or '')}")
-        except Exception:
-            logging.exception("could not log replied-to message")
-
-    key = (chat_id, user_id)
-    if key in muted:
-        until = muted[key]
-        if until is None or until > time.time():
-            try:
-                await bot.delete_message(chat_id, message.message_id)
-            except Exception:
-                pass
-            return
-        else:
-            try:
-                del muted[key]
-            except KeyError:
-                pass
-
     text = (message.text or message.caption or "").strip()
     if text:
         parts = text.split()
@@ -181,6 +158,28 @@ async def _commands_and_filters(message: types.Message):
                 info = await message.reply(f"سکوت {target.full_name} برداشته شد.")
             else:
                 info = await message.reply("سکوت نیست که..")
+            await asyncio.sleep(10)
+            try:
+                await bot.delete_message(chat_id, info.message_id)
+                await bot.delete_message(chat_id, message.message_id)
+            except Exception:
+                pass
+            return
+
+        if cmd == "حذف" and len(parts) > 1 and parts[1] == "پین":
+            if not message.reply_to_message:
+                await message.reply("برای حذف پین باید روی همان پیام ریپلای کنی.")
+                return
+            if not await is_admin(message.from_user.id):
+                await message.reply("فقط ادمین/سازنده می‌تواند پین را حذف کند.")
+                return
+            try:
+                await bot.unpin_chat_message(chat_id, message.reply_to_message.message_id)
+                info = await message.reply("پین پیام برداشته شد.")
+            except Exception:
+                logging.exception("failed to unpin message")
+                await message.reply("خطا در برداشتن پین (ممکن است ربات دسترسی نداشته باشد).")
+                return
             await asyncio.sleep(10)
             try:
                 await bot.delete_message(chat_id, info.message_id)
@@ -287,7 +286,7 @@ async def _commands_and_filters(message: types.Message):
 
             if not can_delete:
                 try:
-                    await message.reply("هشدار: ربات دسترسی حذف پیام‌ها را ندارد؛ برای حذف پیام‌های ادمین باید ربات را ادمین با دسترسی 'Delete Messages' کنید.")
+                    await message.reply("من دسترسی به حذف ندارم بجنب برو بهم دسترسی بده... زود!")
                 except Exception:
                     pass
 
