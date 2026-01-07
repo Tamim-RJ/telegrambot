@@ -1,10 +1,10 @@
-import asyncio
-import time
-import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-import os
 from dotenv import load_dotenv
+import logging
+import asyncio
+import time
+import os
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -104,6 +104,7 @@ async def clear_chat(message: types.Message):
         except Exception:
             pass
 
+
 @dp.message()
 async def _commands_and_filters(message: types.Message):
     if message.chat.type not in ("group", "supergroup"):
@@ -188,6 +189,56 @@ async def _commands_and_filters(message: types.Message):
                 pass
             return
 
+        if cmd == "پین":
+            if not message.reply_to_message:
+                await message.reply("برای پین باید روی یک پیام ریپلای کنی.")
+                return
+            if not await is_admin(message.from_user.id):
+                await message.reply("فقط ادمین/سازنده می‌تونه پین کنه.")
+                return
+            try:
+                await bot.pin_chat_message(chat_id, message.reply_to_message.message_id, disable_notification=True)
+                info = await message.reply("پیام پین شد.")
+            except Exception:
+                logging.exception("failed to pin message")
+                await message.reply("خطا در پین کردن (ممکن است ربات دسترسی نداشته باشد).")
+                return
+            await asyncio.sleep(10)
+            try:
+                await bot.delete_message(chat_id, info.message_id)
+                await bot.delete_message(chat_id, message.message_id)
+            except Exception:
+                pass
+            return
+
+        if cmd == "بگوو":
+            if len(parts) < 2:
+                await message.reply("متن برای گفتن وارد کن. مثال: بگوو سلام")
+                return
+            say_text = " ".join(parts[1:])
+            sent = None
+            try:
+                if message.reply_to_message and await is_admin(message.from_user.id):
+                    sent = await bot.send_message(chat_id, say_text, reply_to_message_id=message.reply_to_message.message_id)
+                else:
+                    sent = await message.answer(say_text)
+            except Exception:
+                logging.exception("failed to send say message")
+                return
+
+            try:
+                await bot.delete_message(chat_id, message.message_id)
+            except Exception:
+                pass
+                
+            await asyncio.sleep(10)
+            try:
+                if sent:
+                    await bot.delete_message(chat_id, sent.message_id)
+            except Exception:
+                pass
+            return
+
         if cmd == "حذف":
             if not await is_admin(message.from_user.id):
                 await message.reply("فقط ادمین‌ها می‌تونن حذف کنن و من...")
@@ -223,9 +274,27 @@ async def _commands_and_filters(message: types.Message):
             MAX_DELETE = 100
             count = min(count, MAX_DELETE)
             status = await message.reply("در حال پاکسازی...")
+
+            can_delete = True
+            try:
+                me = await bot.get_me()
+                bot_member = await bot.get_chat_member(chat_id, me.id)
+                can_delete = getattr(bot_member, "can_delete_messages", True)
+                if bot_member.status != "administrator" and bot_member.status != "creator":
+                    can_delete = False
+            except Exception:
+                logging.exception("failed to fetch bot chat member info")
+
+            if not can_delete:
+                try:
+                    await message.reply("هشدار: ربات دسترسی حذف پیام‌ها را ندارد؛ برای حذف پیام‌های ادمین باید ربات را ادمین با دسترسی 'Delete Messages' کنید.")
+                except Exception:
+                    pass
+
             ids = [message.message_id - i for i in range(1, count + 1)]
             ids = [m for m in ids if m > 0]
             deleted = 0
+            failed = []
             try:
                 await bot.delete_messages(chat_id, ids)
                 deleted = len(ids)
@@ -237,6 +306,7 @@ async def _commands_and_filters(message: types.Message):
                         deleted += 1
                     except Exception:
                         logging.exception(f"failed to delete message {mid}")
+                        failed.append(mid)
                     await asyncio.sleep(0.05)
             final = await message.answer(f"پاکسازی تموم شد\nتعداد حذف شده: {deleted}")
             await asyncio.sleep(10)
@@ -266,7 +336,6 @@ async def _commands_and_filters(message: types.Message):
                     return
 
             muted[(chat_id, target.id)] = until
-            # apply restriction to prevent sending messages
             try:
                 await bot.restrict_chat_member(chat_id, target.id, permissions=types.ChatPermissions(
                     can_send_messages=False,
@@ -281,13 +350,11 @@ async def _commands_and_filters(message: types.Message):
             else:
                 info = await message.reply(f"{target.full_name} برای {parts[1]} دقیقه سکوت شد.")
 
-                # schedule unmute
                 async def _auto_unmute(c_id, u_id, delay):
                     await asyncio.sleep(delay)
                     k = (c_id, u_id)
                     if k in muted and muted[k] is not None and muted[k] <= time.time():
                         try:
-                            # lift restriction in telegram
                             try:
                                 await bot.restrict_chat_member(c_id, u_id, permissions=types.ChatPermissions(
                                     can_send_messages=True,
