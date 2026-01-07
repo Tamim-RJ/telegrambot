@@ -32,11 +32,9 @@ muted_users = {}
 _DIGIT_MAP = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 
 def normalize_number(s: str) -> str:
-    """Convert Persian/Arabic digits to English"""
     return s.translate(_DIGIT_MAP) if isinstance(s, str) else s
 
 async def is_admin(chat_id: int, user_id: int) -> bool:
-    """Check if user is admin or owner"""
     if OWNER_ID and user_id == OWNER_ID:
         return True
     try:
@@ -47,7 +45,6 @@ async def is_admin(chat_id: int, user_id: int) -> bool:
         return False
 
 async def delete_messages_safe(chat_id: int, message_ids: list[int]):
-    """Safely delete multiple messages"""
     for mid in message_ids:
         try:
             await bot.delete_message(chat_id, mid)
@@ -55,13 +52,11 @@ async def delete_messages_safe(chat_id: int, message_ids: list[int]):
             logger.debug(f"Could not delete message {mid}: {e}")
 
 async def auto_delete_after(chat_id: int, message_ids: list[int], delay: int = 10):
-    """Auto-delete messages after delay"""
     await asyncio.sleep(delay)
     await delete_messages_safe(chat_id, message_ids)
 
 @dp.message(Command("start", "help"))
 async def cmd_start(message: types.Message):
-    """Show help message"""
     if message.chat.type == "private" or "group" or "supergroup":
         help_text = """
 <b>راهنمای ربات</b>
@@ -82,7 +77,6 @@ async def cmd_start(message: types.Message):
 
 @dp.message(Command("clear"))
 async def cmd_clear(message: types.Message):
-    """Clear messages with /clear command"""
     if message.chat.type not in ("group", "supergroup"):
         await message.reply("این دستور فقط تو گروه کار می‌کند.")
         return
@@ -145,7 +139,6 @@ async def cmd_clear(message: types.Message):
 
 @dp.message(F.text.startswith("پین"))
 async def cmd_pin(message: types.Message):
-    """Pin a message"""
     if not message.reply_to_message:
         await message.reply("باید ریپ کنی")
         return
@@ -171,7 +164,6 @@ async def cmd_pin(message: types.Message):
 
 @dp.message(F.text.startswith("حذف پین همه"))
 async def cmd_unpin(message: types.Message):
-    """Unpin the currently pinned message"""
     if message.chat.type not in ("group", "supergroup"):
         return
     
@@ -193,7 +185,6 @@ async def cmd_unpin(message: types.Message):
 
 @dp.message(F.text.startswith("حذف پین"))
 async def cmd_unpin(message: types.Message):
-    """Unpin a specific message (by reply)"""
     if not message.reply_to_message:
         await message.reply("باید رو پیام پین‌شده ریپ کنی")
         return
@@ -219,7 +210,6 @@ async def cmd_unpin(message: types.Message):
 
 @dp.message(F.text.startswith("بگوو"))
 async def cmd_say(message: types.Message):
-    """Make bot say something"""
     parts = (message.text or "").split(maxsplit=1)
     if len(parts) < 2:
         await message.reply("بلد نیستی دست نزن...")
@@ -243,7 +233,6 @@ async def cmd_say(message: types.Message):
 
 @dp.message(F.text.startswith("سکوت"))
 async def cmd_mute(message: types.Message):
-    """Mute a user"""
     if not message.reply_to_message:
         await message.reply("باید رو یکی ریپ کنی")
         return
@@ -293,7 +282,6 @@ async def cmd_mute(message: types.Message):
 
 @dp.message(F.text.startswith("حذف سکوت"))
 async def cmd_unmute(message: types.Message):
-    """Unmute a user"""
     if not message.reply_to_message:
         await message.reply("باید رو یکی ریپ کنی")
         return
@@ -334,7 +322,6 @@ async def cmd_unmute(message: types.Message):
 
 @dp.message(F.text.startswith("حذف"))
 async def cmd_delete(message: types.Message):
-    """Delete messages with 'حذف' command"""
     if message.chat.type not in ("group", "supergroup"):
         return
 
@@ -357,8 +344,6 @@ async def cmd_delete(message: types.Message):
             [status.message_id, final.message_id, message.message_id]
         ))
         return
-
-
 
     parts = (message.text or "").split()
     try:
@@ -395,10 +380,7 @@ async def cmd_delete(message: types.Message):
         [status.message_id, final.message_id, message.message_id]
     ))
 
-
-
 async def schedule_unmute(chat_id: int, user_id: int, until_time: int):
-    """Schedule automatic unmute"""
     delay = max(0, until_time - int(time.time()))
     await asyncio.sleep(delay)
     
@@ -422,12 +404,9 @@ async def schedule_unmute(chat_id: int, user_id: int, until_time: int):
             )
         except Exception as e:
             logger.error(f"Auto-unmute failed: {e}")
-
-
-
+            
 @dp.message(F.text | F.caption)
 async def filter_profanity(message: types.Message):
-    """Filter bad words"""
     if message.chat.type not in ("group", "supergroup"):
         return
     
@@ -446,10 +425,7 @@ async def filter_profanity(message: types.Message):
         except Exception as e:
             logger.error(f"Filter failed: {e}")
 
-
-
 async def main():
-    """Start the bot"""
     logger.info("Bot is starting...")
     try:
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
@@ -463,3 +439,5 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
+
+#کی میخواد بیاد کد منو نگاه کنه آخه، الکی دارم کامنت میذارم... پاکشون میکنم
