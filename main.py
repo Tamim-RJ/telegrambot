@@ -1,3 +1,4 @@
+from aiogram.client.default import DefaultBotProperties
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
@@ -14,7 +15,7 @@ OWNER_ID = int(os.getenv("OWNER_ID", 0))
 if not TOKEN:
     raise ValueError("TOKEN environment variable is required")
 
-bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
 logging.basicConfig(
@@ -331,6 +332,8 @@ async def cmd_delete(message: types.Message):
         ))
         return
 
+
+
     parts = (message.text or "").split()
     try:
         count = int(normalize_number(parts[1])) if len(parts) > 1 else 10
@@ -366,6 +369,8 @@ async def cmd_delete(message: types.Message):
         [status.message_id, final.message_id, message.message_id]
     ))
 
+
+
 async def schedule_unmute(chat_id: int, user_id: int, until_time: int):
     """Schedule automatic unmute"""
     delay = max(0, until_time - int(time.time()))
@@ -392,6 +397,8 @@ async def schedule_unmute(chat_id: int, user_id: int, until_time: int):
         except Exception as e:
             logger.error(f"Auto-unmute failed: {e}")
 
+
+
 @dp.message(F.text | F.caption)
 async def filter_profanity(message: types.Message):
     """Filter bad words"""
@@ -413,6 +420,8 @@ async def filter_profanity(message: types.Message):
         except Exception as e:
             logger.error(f"Filter failed: {e}")
 
+
+
 async def main():
     """Start the bot"""
     logger.info("Bot is starting...")
@@ -428,3 +437,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
+        
