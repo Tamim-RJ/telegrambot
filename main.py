@@ -210,8 +210,7 @@ async def cmd_say(message: types.Message):
             sent = await message.answer(text)
         
         await bot.delete_message(message.chat.id, message.message_id)
-        
-        asyncio.create_task(auto_delete_after(message.chat.id, [sent.message_id]))
+
     except Exception as e:
         logger.error(f"Say command failed: {e}")
 
@@ -437,4 +436,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
-        
