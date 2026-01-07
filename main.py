@@ -29,34 +29,29 @@ FILTER_ACTIVE = False
 FILTER_WORDS = []
 FILTER_BYPASS_ADMINS = True
 muted_users = {}
-main_help_text = """
-<b>راهنمای ربات</b>
+main_help_text = """<b>راهنمای ربات</b>
 
 یکی از گزینه‌های زیر رو انتخاب کن
 """
 
 help_text = {
-    "help_delete": """
-    <b>راهنمای حذف</b>
+    "help_delete": """<b>راهنمای حذف</b>
 
 حذف [تعداد] - پاک کردن پیام‌ها
 حذف - حذف پیام مشخص شده (reply)""",
 
-    "help_pin": """
-    <b>راهنمای پین</b>
+    "help_pin": """<b>راهنمای پین</b>
 
 پین - پین کردن پیام (reply)
 حذف پین - حذف پین (reply)
 حذف پین همه - حذف همه پین ها (reply)""",
 
-    "help_mute": """
-    <b>راهنمای سکوت</b>
+    "help_mute": """<b>راهنمای سکوت</b>
 
 سکوت [دقیقه] - سکوت کاربر (reply)
 حذف سکوت - لغو سکوت (reply)""",
 
-    "help_eco": """
-    <b>راهنمای اکو</b>
+    "help_eco": """<b>راهنمای اکو</b>
 
     بگوو [متن] - ارسال پیام از طرف ربات"""
 }
@@ -89,10 +84,12 @@ async def auto_delete_after(chat_id: int, message_ids: list[int], delay: int = 1
 
 def help_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="حذف", callback_data="help_delete")],
-        [InlineKeyboardButton(text="پین", callback_data="help_pin")],
-        [InlineKeyboardButton(text="سکوت", callback_data="help_mute")],
-        [InlineKeyboardButton(text="اکو", callback_data="help_eco")],
+        [
+        InlineKeyboardButton(text="حذف", callback_data="help_delete"),
+        InlineKeyboardButton(text="پین", callback_data="help_pin"),
+        InlineKeyboardButton(text="سکوت", callback_data="help_mute"),
+        ],
+        [InlineKeyboardButton(text="اکو", callback_data="help_eco")]
     ])
 
 def help_keyboard_sub():
