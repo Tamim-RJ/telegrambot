@@ -62,7 +62,7 @@ async def auto_delete_after(chat_id: int, message_ids: list[int], delay: int = 1
 @dp.message(Command("start", "help"))
 async def cmd_start(message: types.Message):
     """Show help message"""
-    if message.chat.type == "private":
+    if message.chat.type == "private" or "group" or "supergroup":
         help_text = """
 <b>راهنمای ربات</b>
 
