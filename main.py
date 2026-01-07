@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-OWNER_ID = os.getenv("OWNER_ID")
+OWNER_ID = int(os.getenv("OWNER_ID"))
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -21,7 +21,6 @@ FILTER_WORDS = []
 FILTER_BYPASS_ADMINS = True
 
 muted = {}
-
 
 _DIGIT_MAP = str.maketrans(
     "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩",
