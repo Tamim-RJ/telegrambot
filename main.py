@@ -67,15 +67,16 @@ async def cmd_start(message: types.Message):
 <b>راهنمای ربات</b>
 
 <b>دستورات مدیریتی:</b>
-• /clear [تعداد] - پاک کردن پیام‌ها
-• حذف [تعداد] - پاک کردن پیام‌ها
-• پین - پین کردن پیام (reply)
-• حذف پین - حذف پین (reply)
-• سکوت [دقیقه] - سکوت کاربر (reply)
-• حذف سکوت - لغو سکوت (reply)
-• بگوو [متن] - ارسال پیام از طرف ربات
+/clear [تعداد] - پاک کردن پیام‌ها
+حذف [تعداد] - پاک کردن پیام‌ها
+پین - پین کردن پیام (reply)
+حذف پین - حذف پین (reply)
+حذف پین همه - حذف همه پین ها (reply)
+سکوت [دقیقه] - سکوت کاربر (reply)
+حذف سکوت - لغو سکوت (reply)
+بگوو [متن] - ارسال پیام از طرف ربات
 
-<b>توجه:</b> برای ادمین و من
+<b>توجه:</b> برای ادمین و منه
         """
         await message.answer(help_text.strip())
 
@@ -168,19 +169,45 @@ async def cmd_pin(message: types.Message):
         logger.error(f"Pin failed: {e}")
         await message.reply("منو ادمین کردی؟")
 
+@dp.message(F.text.startswith("حذف پین همه"))
+async def cmd_unpin(message: types.Message):
+    """Unpin the currently pinned message"""
+    if message.chat.type not in ("group", "supergroup"):
+        return
+    
+    if not await is_admin(message.chat.id, message.from_user.id):
+        await message.reply("فقط من و ادمین میتونیم.")
+        return
+    
+    try:
+        await bot.unpin_all_chat_messages(message.chat.id)
+        
+        info = await message.reply("پین ها رو برداشتم.")
+        asyncio.create_task(auto_delete_after(
+            message.chat.id,
+            [info.message_id, message.message_id]
+        ))
+    except Exception as e:
+        logger.error(f"Unpin failed: {e}")
+        await message.reply("نمیتونم بردارم.. چک کن ببین دسترسی دارم؟؟")
+
 @dp.message(F.text.startswith("حذف پین"))
 async def cmd_unpin(message: types.Message):
-    """Unpin a message"""
+    """Unpin a specific message (by reply)"""
     if not message.reply_to_message:
-        await message.reply("باید ریپ کنی")
+        await message.reply("باید رو پیام پین‌شده ریپ کنی")
         return
-
+    
     if not await is_admin(message.chat.id, message.from_user.id):
-        await message.reply("من ادمین میتونیم فقط.")
+        await message.reply("فقط من و ادمین میتونیم.")
         return
-
+    
     try:
-        await bot.unpin_chat_message(message.chat.id, message.reply_to_message.message_id)
+        await bot.unpin_chat_message(
+            chat_id=message.chat.id,
+            message_id=message.reply_to_message.message_id
+        )
+        
         info = await message.reply("پین رو برداشتم.")
         asyncio.create_task(auto_delete_after(
             message.chat.id,
@@ -188,7 +215,7 @@ async def cmd_unpin(message: types.Message):
         ))
     except Exception as e:
         logger.error(f"Unpin failed: {e}")
-        await message.reply("خطا")
+        await message.reply("خطا: نشد که بشه..")
 
 @dp.message(F.text.startswith("بگوو"))
 async def cmd_say(message: types.Message):
